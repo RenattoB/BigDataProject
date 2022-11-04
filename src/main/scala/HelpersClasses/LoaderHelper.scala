@@ -62,4 +62,26 @@ object LoaderHelper {
     returnString.append(s"\n Percentage of cells in null ${numberOfCellsInNull * 100 / (columnNumber * dfPostsTotal).toFloat}%\n")
     returnString.toString()
   }
+
+  def generateParquetData(spark: SparkSession): Unit = {
+    val postsDf = readTable(spark, "Posts")
+    val usersDf = readTable(spark, "Users")
+    val postsLinksDf = readTable(spark, "PostLinks")
+    val commentsDf = readTable(spark, "Comments")
+    val badgesDf = readTable(spark, "Badges")
+    val postsTypesDf = readTable(spark, "PostTypes")
+    val postsVotesDf = readTable(spark, "Votes")
+    val postsVoteTypesDf = readTable(spark, "VoteTypes")
+
+    //val postsDfSample = postsDf.sample(0.20)
+
+    postsDf.write.parquet("src/main/resources/posts.parquet")
+    usersDf.write.parquet("src/main/resources/users.parquet")
+    postsLinksDf.write.parquet("src/main/resources/postLinks.parquet")
+    commentsDf.write.parquet("src/main/resources/comments.parquet")
+    badgesDf.write.parquet("src/main/resources/badges.parquet")
+    postsTypesDf.write.parquet("src/main/resources/postTypes.parquet")
+    postsVotesDf.write.parquet("src/main/resources/Votes.parquet")
+    postsVoteTypesDf.write.parquet("src/main/resources/VoteTypes.parquet")
+  }
 }
