@@ -42,11 +42,14 @@ object LoaderHelper {
   }
 
   def getPostsEda(dfPosts: DataFrame): String = {
-    val returnString = new mutable.StringBuilder("EDA report for Posts Dataframe\n")
+    val returnString = new mutable.StringBuilder("\nEDA report for Posts Dataframe\n")
     val dfPostsTotal = dfPosts.count()
     val columnNames = dfPosts.columns
     val columnNumber = columnNames.length
+    returnString.append(s"Numbers of rows -> $dfPostsTotal\n")
+    returnString.append(s"Numbers of columns -> $columnNumber\n")
     var numberOfCellsInNull : Long = 0
+    returnString.append("Column Report:\n")
     columnNames.foreach {columnName =>
       var columnNull : Long = 0
       if (dfPosts.schema(columnName).dataType.typeName == "timestamp") {
@@ -58,8 +61,8 @@ object LoaderHelper {
       returnString.append(s"Number of $columnName in null -> $columnNull \n")
       returnString.append(s"Percentage of $columnName in null -> ${round(columnNull * 100 / dfPostsTotal.toFloat,3)} % \n")
     }
-    returnString.append(s"\n Number of cells in null $numberOfCellsInNull")
-    returnString.append(s"\n Percentage of cells in null ${numberOfCellsInNull * 100 / (columnNumber * dfPostsTotal).toFloat}%\n")
+    returnString.append(s"\nNumber of cells in null $numberOfCellsInNull")
+    returnString.append(s"\nPercentage of cells in null ${numberOfCellsInNull * 100 / (columnNumber * dfPostsTotal).toFloat}%\n")
     returnString.toString()
   }
 

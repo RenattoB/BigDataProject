@@ -3,8 +3,13 @@ package HelpersClasses
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{asc, avg, col, count, countDistinct, desc, expr, hour, lit, sum, date_format}
+import org.apache.log4j.Logger
+import org.apache.log4j.Level
 
 object PostLoadClass extends App{
+
+  Logger.getLogger("org").setLevel(Level.OFF)
+  Logger.getLogger("akka").setLevel(Level.OFF)
 
   val sparkConf = new SparkConf()
     .setAppName("stackExchange-spark-analyzer")
@@ -38,7 +43,7 @@ object PostLoadClass extends App{
 
   //INSIGHTS
   val postsJoinUsers = postsDfClean.col("OwnerUserId") === usersDf.col("Id")
-  //1.- Top 50 users with the highest average answer score excluding community wiki / closed posts or users with less than 10 answers
+  //1.- Top 50 users with the highest average answer score excluding community wiki / closed posts
   val postsAndUsers = postsDfClean.join(usersDf, postsJoinUsers, "inner")
   postsAndUsers
     .filter("PostTypeId = 2 and CommunityOwnedDate is null and ClosedDate is null")
@@ -55,8 +60,8 @@ object PostLoadClass extends App{
       col("Answers"),
       col("Average Answer Score")
     )
-    .limit(50)
-    .show()
+    .limit(20)
+    .show(20)
 
   //2.- Users with highest accept rate of their answers
   val postsParentDf = spark.read.parquet("src/main/resources/posts.parquet")
