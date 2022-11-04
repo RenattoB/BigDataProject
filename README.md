@@ -530,3 +530,83 @@ It has been date format to "yyyy-MM" to have only the year and the month and gro
         .orderBy(desc("Date"))
         .show()
 ```
+
+### 4.- Project Structure
+The solution is composed by three objects that one extends the App in order to execute the process.
+
+- PostLoadClass: In this object the SparkSession is used and perform all the operations to generate the insights.
+  
+  - LoaderHelper: This object has helper methods:
+
+    - ``` def readTable (spark: SparkSession, tableName:String)``` it receives the SparkSession object and the table name to be read, it makes the connection to the SQL Server database and returns the table pass in a DataFrame object.
+
+```Scala
+   def readTable(spark: SparkSession, tableName:String): DataFrame = {
+       spark.read
+         .format("jdbc")
+         .options(Map(
+           "drive" -> "com.microsoft.sqlserver.jdbc.SQLServerDriver",
+           "url" -> "jdbc:sqlserver://localhost:1456;databaseName=StackOverflow2013",
+           "user" -> "sa",
+           "password" -> "sql@server2022",
+           "dbtable" -> s"dbo.$tableName"
+         ))
+         .load()
+     }
+```
+
+- ``` def getPostsEda(dfPosts: DataFrame)``` it receives a Dataframe object and iterate dynamically through every column it has, then make some operations in order to return values to make the Exploratory Data Analysis. It store all the results in a StringBuilder object and return a String at the end.
+```Scala
+   def getPostsEda(dfPosts: DataFrame): String = {
+       val returnString = new mutable.StringBuilder("\nEDA report for Posts Dataframe\n")
+       val dfPostsTotal = dfPosts.count()
+       val columnNames = dfPosts.columns
+       val columnNumber = columnNames.length
+       returnString.append(s"Numbers of rows -> $dfPostsTotal\n")
+       returnString.append(s"Numbers of columns -> $columnNumber\n")
+       var numberOfCellsInNull : Long = 0
+       returnString.append("Column Report:\n")
+       columnNames.foreach {columnName =>
+         var columnNull : Long = 0
+         if (dfPosts.schema(columnName).dataType.typeName == "timestamp") {
+           columnNull = dfPosts.filter(dfPosts(columnName).isNull || dfPosts(columnName) === "").count()
+         } else {
+           columnNull = dfPosts.filter(dfPosts(columnName).isNull || dfPosts(columnName) === "" || dfPosts(columnName).isNaN).count()
+         }
+         numberOfCellsInNull += columnNull
+         returnString.append(s"Number of $columnName in null -> $columnNull \n")
+         returnString.append(s"Percentage of $columnName in null -> ${round(columnNull * 100 / dfPostsTotal.toFloat,3)} % \n")
+       }
+       returnString.append(s"\nNumber of cells in null $numberOfCellsInNull")
+       returnString.append(s"\nPercentage of cells in null ${numberOfCellsInNull * 100 / (columnNumber * dfPostsTotal).toFloat}%\n")
+       returnString.toString()
+     }
+```
+
+- ``` def generateParquetData(spark: SparkSession)``` it receives a SparkSession object and read all the tables contain in the StackOverflow schema, it charges the data obtain in parquet format in order to made the processing of the insights more quickly in other iterations.
+
+```Scala
+   def generateParquetData(spark: SparkSession): Unit = {
+       val postsDf = readTable(spark, "Posts")
+       val usersDf = readTable(spark, "Users")
+       val postsLinksDf = readTable(spark, "PostLinks")
+       val commentsDf = readTable(spark, "Comments")
+       val badgesDf = readTable(spark, "Badges")
+       val postsTypesDf = readTable(spark, "PostTypes")
+       val postsVotesDf = readTable(spark, "Votes")
+       val postsVoteTypesDf = readTable(spark, "VoteTypes")
+   
+       //val postsDfSample = postsDf.sample(0.20)
+   
+       postsDf.write.parquet("src/main/resources/posts.parquet")
+       usersDf.write.parquet("src/main/resources/users.parquet")
+       postsLinksDf.write.parquet("src/main/resources/postLinks.parquet")
+       commentsDf.write.parquet("src/main/resources/comments.parquet")
+       badgesDf.write.parquet("src/main/resources/badges.parquet")
+       postsTypesDf.write.parquet("src/main/resources/postTypes.parquet")
+       postsVotesDf.write.parquet("src/main/resources/Votes.parquet")
+       postsVoteTypesDf.write.parquet("src/main/resources/VoteTypes.parquet")
+  }
+```
+
+- HelperSchema.scala: This object has schema StructureTypes defined for every table.
