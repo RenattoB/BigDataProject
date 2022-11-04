@@ -215,8 +215,41 @@ In order to load the information to be read, it should be loaded to a SQL Server
 ```
 4. Attach the .mdf to the SQL Server Instance.
 
-### 3. Dataset Insights and their reports
-#### 3.1. Who are the top 20 users with the highest average answer score excluding community wiki / closed posts?
+### 2.2. Execution
+- Spark Cluster with docker
+
+Using the [configuration](./spark-cluster) of the RTJVM course:
+
+1. Copy the .jar file generated in artifacts to *spark-cluster/apps*
+
+2. Copy the dataset or sample files to *spark-cluster/data*
+
+3. In a shell or terminal, go to the *spark-cluster* directory, and build the images with the next commands:
+  ```shell
+  docker build -t spark-base:latest ./docker/base
+  docker build -t spark-master:latest ./docker/spark-master
+  docker build -t spark-worker:latest ./docker/spark-worker
+  docker build -t spark-submit:latest ./docker/spark-submit
+  ```
+
+4. Start the services inside the docker-compose.yml file, with 3 workers:
+  ```shell
+  docker-compose up -d --scale spark-worker=3
+  ```
+
+5. Exec the spark-master container:
+  ```shell
+  docker exec -it spark-cluster-spark-master-1 bash
+  ```
+
+6. Inside the container, you can send the application via spark-submit:
+  ```shell
+  ./bin/spark-submit --deploy-mode client --master spark://<container-identifier>:7077 \
+  --verbose --supervisor /opt/spark-apps/BigDataProject.jar
+  ```
+
+## 3. Dataset Insights and their reports
+### 3.1. Who are the top 20 users with the highest average answer score excluding community wiki / closed posts?
 
 ``` Scala
 +-------+------------------+-------+--------------------+
@@ -273,7 +306,7 @@ The reports has been construct with a inner join between the table Posts and Use
 ```
 
 
-#### 3.2. Who are the users with highest accept rate of their answers?
+### 3.2. Who are the users with highest accept rate of their answers?
 ``` Scala
 +-------+------------------+-----------------+---------------+----------------+
 |     Id|       DisplayName|Number of Answers|Number Accepted|Accepted Percent|
@@ -328,7 +361,7 @@ The table Posts has been self join in order to do the match with the Acceptance 
       .show()
 ```
 
-#### 3.3. Top Users by Number of Bounties Won?
+### 3.3. Top Users by Number of Bounties Won?
 ``` Scala
 +-------+----------------+------------+
 |User Id|        Username|Bounties Won|
@@ -380,7 +413,7 @@ It is ordered descending by the bounty amount won.
       .show()
 ```
 
-#### 3.4. What answers are the most upvoted of All Time?
+### 3.4. What answers are the most upvoted of All Time?
 ```Scala
 +--------+--------------------+----------+
 | Post Id|            Question|Vote Count|
@@ -429,7 +462,7 @@ Also filter by PostTypeId = 2 (Answer) and VoteTypeId = 2 (UpVote), the results 
         .show()
 ```
 
-#### 3.5. What are the distribution of Users Activity Per Hour?
+### 3.5. What are the distribution of Users Activity Per Hour?
 
 ```Scala
 +----+----------------+
@@ -482,7 +515,7 @@ Then the result data frame was joined by the distinct hours register in the Post
     .show(24)
 ```
 
-#### 3.6. Questions Count by Month
+### 3.6. Questions Count by Month
 ```Scala
 +-------+--------+
 |   Date|Quantity|
@@ -531,7 +564,7 @@ It has been date format to "yyyy-MM" to have only the year and the month and gro
         .show()
 ```
 
-### 4.- Project Structure
+## 4.- Project Structure
 The solution is composed by three objects that one extends the App in order to execute the process.
 
 - PostLoadClass: In this object the SparkSession is used and perform all the operations to generate the insights.

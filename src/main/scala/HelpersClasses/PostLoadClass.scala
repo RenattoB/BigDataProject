@@ -8,8 +8,8 @@ import org.apache.log4j.Level
 
 object PostLoadClass extends App{
 
-  Logger.getLogger("org").setLevel(Level.OFF)
-  Logger.getLogger("akka").setLevel(Level.OFF)
+  //Logger.getLogger("org").setLevel(Level.OFF)
+  //Logger.getLogger("akka").setLevel(Level.OFF)
 
   val sparkConf = new SparkConf()
     .setAppName("stackExchange-spark-analyzer")
@@ -21,6 +21,8 @@ object PostLoadClass extends App{
       .config(sparkConf)
       .master("local[*]")
       .getOrCreate()
+
+  spark.sparkContext.setLogLevel("WARN")
 
   //reading and writing data
   //LoaderHelper.generateParquetData(spark)
