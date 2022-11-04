@@ -222,28 +222,31 @@ In order to load the information to be read, it should be loaded to a SQL Server
 +-------+------------------+-------+--------------------+
 |User Id|          Username|Answers|Average Answer Score|
 +-------+------------------+-------+--------------------+
-| 613430|        Tom Wadley|     26|  351.15384615384613|
-| 214090|           hallski|     28|  290.17857142857144|
-|  95592|    Matthew Rankin|     85|   220.3294117647059|
-|  25449|  Tsvetomir Tsonev|     48|            178.0625|
-|  39933|          genehack|     52|  166.09615384615384|
-|    264|         Xenph Yan|     22|   160.9090909090909|
-|    462|         Greg Case|     24|  144.95833333333334|
+| 613430|        Tom Wadley|     26|             351.154|
+| 214090|           hallski|     28|             290.179|
+|  95592|    Matthew Rankin|     85|             220.329|
+|  25449|  Tsvetomir Tsonev|     48|             178.063|
+|  39933|          genehack|     52|             166.096|
+|    264|         Xenph Yan|     22|             160.909|
+|    462|         Greg Case|     24|             144.958|
 | 192810|      Misko Hevery|     28|              143.75|
-|  19082|     Mike Hordecki|     34|  141.35294117647058|
-|  22850|               Tom|     31|  140.29032258064515|
-|   8985|      Ryan McGeary|    127|  139.85826771653544|
-|  98068|       Eric Nguyen|     27|  122.96296296296296|
-|   1057|   Harley Holcombe|     84|  120.22619047619048|
-|  15872|       Adam Franco|     32|            117.1875|
-| 259038| Josh David Miller|    113|    113.070796460177|
-|  20846|          flatline|     32|           105.15625|
-|    822|        Reto Meier|     66|   104.8030303030303|
-|  25472|             VolkA|     21|  102.66666666666667|
-| 207162|            Trevor|     26|   98.65384615384616|
-|  41165|Patrick Harrington|     26|   98.53846153846153|
+|  19082|     Mike Hordecki|     34|             141.353|
+|  22850|               Tom|     31|              140.29|
+|   8985|      Ryan McGeary|    127|             139.858|
+|  98068|       Eric Nguyen|     27|             122.963|
+|   1057|   Harley Holcombe|     84|             120.226|
+|  15872|       Adam Franco|     32|             117.188|
+| 259038| Josh David Miller|    113|             113.071|
+|  20846|          flatline|     32|             105.156|
+|    822|        Reto Meier|     66|             104.803|
+|  25472|             VolkA|     21|             102.667|
+| 207162|            Trevor|     26|              98.654|
+|  41165|Patrick Harrington|     26|              98.538|
 +-------+------------------+-------+--------------------+
 ```
+The report shows the top 20 users with the highest average answer score, it is filtered by Community Wiki and Closed Posts. The number of answers the user has to have is at least 10 answers.
+The percentage of the answer score is rounded to 3 decimals. It is also ordered by the Average Answer Score by descending.
+The reports has been construct with a inner join between the table Posts and Users.
 
 **Code**
 
@@ -272,31 +275,35 @@ In order to load the information to be read, it should be loaded to a SQL Server
 
 #### 3.2. Who are the users with highest accept rate of their answers?
 ``` Scala
-+-------+------------------+-----------------+---------------+-----------------+
-|     Id|       DisplayName|Number of Answers|Number Accepted| Accepted Percent|
-+-------+------------------+-----------------+---------------+-----------------+
-| 342740|              Prix|              258|            258|            100.0|
-| 864604|            joshnh|               61|             61|            100.0|
-|2887841|         tasseKATT|               30|             30|            100.0|
-| 664470|     Jérôme Mahuet|               12|             12|            100.0|
-| 961092| Dmitry Verhoturov|               12|             12|            100.0|
-|1615819|     Mr. Bojangles|               12|             12|            100.0|
-|1198890|           anfilat|               11|             11|            100.0|
-|2970237|     thenewseattle|               23|             22|95.65217391304348|
-|  54937|   Sedat Kapanoglu|              109|            104|95.41284403669725|
-|1072272|               Tom|               38|             36|94.73684210526316|
-| 941072|             lolol|               34|             32|94.11764705882354|
-| 479947|              arby|               17|             16|94.11764705882354|
-| 196105|               ski|               16|             15|            93.75|
-|1406062|       user1406062|               14|             13|92.85714285714286|
-|2161467|Andreas Lochbihler|               14|             13|92.85714285714286|
-| 502899|            JayneT|               14|             13|92.85714285714286|
-|2009882|         york.beta|               13|             12| 92.3076923076923|
-| 825469|    Heather Miller|               13|             12| 92.3076923076923|
-| 249845|           Dribbel|               13|             12| 92.3076923076923|
-| 784771|       Swordslayer|               13|             12| 92.3076923076923|
-+-------+------------------+-----------------+---------------+-----------------+
++-------+------------------+-----------------+---------------+----------------+
+|     Id|       DisplayName|Number of Answers|Number Accepted|Accepted Percent|
++-------+------------------+-----------------+---------------+----------------+
+| 342740|              Prix|              258|            258|           100.0|
+| 864604|            joshnh|               61|             61|           100.0|
+|2887841|         tasseKATT|               30|             30|           100.0|
+| 664470|     Jérôme Mahuet|               12|             12|           100.0|
+| 961092| Dmitry Verhoturov|               12|             12|           100.0|
+|1615819|     Mr. Bojangles|               12|             12|           100.0|
+|1198890|           anfilat|               11|             11|           100.0|
+|2970237|     thenewseattle|               23|             22|          95.652|
+|  54937|   Sedat Kapanoglu|              109|            104|          95.413|
+|1072272|               Tom|               38|             36|          94.737|
+| 941072|             lolol|               34|             32|          94.118|
+| 479947|              arby|               17|             16|          94.118|
+| 196105|               ski|               16|             15|           93.75|
+|1406062|       user1406062|               14|             13|          92.857|
+|2161467|Andreas Lochbihler|               14|             13|          92.857|
+| 502899|            JayneT|               14|             13|          92.857|
+|2009882|         york.beta|               13|             12|          92.308|
+| 825469|    Heather Miller|               13|             12|          92.308|
+| 249845|           Dribbel|               13|             12|          92.308|
+| 784771|       Swordslayer|               13|             12|          92.308|
++-------+------------------+-----------------+---------------+----------------+
 ```
+
+The report shows users the answers they made, answers that have been accepted, and the percentage that represents the answers accepted.
+It filters the posts so it doesn't consider self-answers to their posts. They have to have a minimum of 10 answers responded and is order in descending by the Accepted Percentage.
+The table Posts has been self join in order to do the match with the Acceptance Answers and also with the table Users.
 
 **Code**
 ```Scala
@@ -349,6 +356,10 @@ In order to load the information to be read, it should be loaded to a SQL Server
 +-------+----------------+------------+
 ```
 
+The report presents the top 10 users that have to obtain Bounties' reputation by answering questions. The bounty system allows users to offer reputation points for any user that would produce an accepted answer to a question.
+It is filtered by VoteTypeId = 9 (BountyClose) and has been joined with 3 tables Votes, Posts, and Users.
+It is ordered descending by the bounty amount won.
+
 **Code**
 ```Scala
     val votesDf = spark.read.parquet("src/main/resources/Votes.parquet")
@@ -396,6 +407,9 @@ In order to load the information to be read, it should be loaded to a SQL Server
   |   60496|<p><strong>Use pr...|      2408|
   +--------+--------------------+----------+
 ```
+
+This report presents the top 20 most liked or upvoted answers of all time.  It has been made by a join between the Votes table and the Posts table.
+Also filter by PostTypeId = 2 (Answer) and VoteTypeId = 2 (UpVote), the results is present order by Vote coun in descending order.
 
 **Code**
 
@@ -448,6 +462,10 @@ In order to load the information to be read, it should be loaded to a SQL Server
 +----+----------------+
 ```
 
+This report shows the distribution of the Activity traffic by hours. The main data frame was constructed with the union of the Posts and the Comments Table, both have been selected by the hour and a counter.
+Then the result data frame was joined by the distinct hours register in the Posts table with a right join. The result was a group by the counter and an order by hours in ascending order.
+
+
 **Code**
 ```Scala
   val commentsDf = spark.read.parquet("src/main/resources/comments.parquet")
@@ -490,6 +508,9 @@ In order to load the information to be read, it should be loaded to a SQL Server
 |2012-06|  140443|
 |2012-05|  144050|
 ```
+
+The report shows the count number of the questions made by month, the report contains a self-join in the Posts table to maintain the original Posts and eliminate duplicates and the PostLinks table.
+It has been date format to "yyyy-MM" to have only the year and the month and group by this camp, then the id's are counted and ordered by Date in descending order.
 
 **Code**
 ```Scala

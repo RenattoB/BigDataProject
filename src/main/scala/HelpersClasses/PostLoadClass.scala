@@ -2,7 +2,7 @@ package HelpersClasses
 
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.functions.{asc, avg, col, count, countDistinct, desc, expr, hour, lit, sum, date_format}
+import org.apache.spark.sql.functions.{asc, avg, col, count, countDistinct, date_format, desc, expr, hour, lit, round, sum}
 import org.apache.log4j.Logger
 import org.apache.log4j.Level
 
@@ -50,7 +50,7 @@ object PostLoadClass extends App{
     .groupBy(usersDf.col("Id"), usersDf.col("DisplayName"))
     .agg(
       countDistinct(postsDf.col("Id")).as("Answers"),
-      avg(col("Score")).as("Average Answer Score")
+      round(avg(col("Score")),3).as("Average Answer Score")
     )
     .where("Answers > 20")
     .orderBy(desc("Average Answer Score"))
@@ -77,7 +77,7 @@ object PostLoadClass extends App{
     .agg(
       count("Users.Id").as("Number of Answers"),
       sum("AcceptedAnswerFlag").as("Number Accepted"),
-      (sum("AcceptedAnswerFlag") * 100 / count("Posts.Id")).as("Accepted Percent")
+      round(sum("AcceptedAnswerFlag") * 100 / count("Posts.Id"),3).as("Accepted Percent")
     )
     .orderBy(desc("Accepted Percent"), desc("Number of Answers"))
     .filter(col("Number of Answers") > 10)
@@ -100,7 +100,8 @@ object PostLoadClass extends App{
     .withColumnRenamed("DisplayName", "Username")
     .withColumnRenamed("OwnerUserId", "User Id")
     .orderBy(desc("Bounties Won"))
-    .show()
+    .limit(10)
+    .show(10)
 
   //4.-  Most Upvoted Answers of All Time
   val votesPostsJoinDf = votesDf.as("Votes")
@@ -115,6 +116,7 @@ object PostLoadClass extends App{
     .withColumnRenamed("Body", "Question")
     .withColumnRenamed("PostId", "Post Id")
     .orderBy(desc("Vote Count"))
+    .limit(20)
     .show()
 
   //5.- Distribution of User Activity Per Hour
