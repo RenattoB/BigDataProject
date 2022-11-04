@@ -1,0 +1,2 @@
+docker-compose up --scale spark-worker=3
+docker exec -it spark-cluster-spark-master-1 bash
