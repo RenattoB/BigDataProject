@@ -36,7 +36,7 @@ object Main {
     postsDf.printSchema()
 
     //EDA REPORT
-    //print(getPostsEda(postsDf))
+    log.log(AppInfo.APP_INFO, getPostsEda(postsDf))
 
     //DATA CLEANING
     val dfPostsClean = postsDf.na.fill("unknown", Array("LastEditorDisplayName"))
@@ -45,10 +45,9 @@ object Main {
     val idOutliers = LoaderHelper.getOutliers(dfPostsClean, spark)
     val postsWithoutOutliers = dfPostsClean.as("dfPosts")
       .join(idOutliers.as("dfOutliers"), col("dfPosts.Id") === col("dfOutliers.Id"), "left-anti")
-    print(postsWithoutOutliers.count())
-    //print(getPostsEda(dfPostsClean))
+    log.log(AppInfo.APP_INFO, getPostsEda(dfPostsClean))
 
-    //LoaderHelper.generateInsights(postsDf, dfPostsClean, spark)
+    LoaderHelper.generateInsights(postsDf, dfPostsClean, spark)
 
 
   }
