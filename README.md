@@ -195,7 +195,7 @@ This will keep only the records of the main Dataframe that didn't make match wit
       .join(idOutliers.as("dfOutliers"), col("dfPosts.Id") === col("dfOutliers.Id"), "left-anti")
 ```
 Exaple of execution:
-```Scala
+```
     Outliers for column -> Score
     Lower Boundary: -4.5
     Upper Boundary: 7.5
