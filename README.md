@@ -75,53 +75,53 @@ Results:
 2. The number of missing cells where 24.415%, due to the structure of the table that contain Posts and Answers this behaviour will not impact in the results obtain.
 
 ```
-EDA report for Posts Dataframe
-Numbers of rows -> 17142169
-Numbers of columns -> 20
-Column Report:
-Number of Id in null -> 0 
-Percentage of Id in null -> 0.0 % 
-Number of AcceptedAnswerId in null -> 0 
-Percentage of AcceptedAnswerId in null -> 0.0 % 
-Number of AnswerCount in null -> 0 
-Percentage of AnswerCount in null -> 0.0 % 
-Number of Body in null -> 6948 
-Percentage of Body in null -> 0.041 % 
-Number of ClosedDate in null -> 16872749 
-Percentage of ClosedDate in null -> 98.428 % 
-Number of CommentCount in null -> 0 
-Percentage of CommentCount in null -> 0.0 % 
-Number of CommunityOwnedDate in null -> 17050460 
-Percentage of CommunityOwnedDate in null -> 99.465 % 
-Number of CreationDate in null -> 0 
-Percentage of CreationDate in null -> 0.0 % 
-Number of FavoriteCount in null -> 0 
-Percentage of FavoriteCount in null -> 0.0 % 
-Number of LastActivityDate in null -> 0 
-Percentage of LastActivityDate in null -> 0.0 % 
-Number of LastEditDate in null -> 10542206 
-Percentage of LastEditDate in null -> 61.499 % 
-Number of LastEditorDisplayName in null -> 16949596 
-Percentage of LastEditorDisplayName in null -> 98.877 % 
-Number of LastEditorUserId in null -> 0 
-Percentage of LastEditorUserId in null -> 0.0 % 
-Number of OwnerUserId in null -> 0 
-Percentage of OwnerUserId in null -> 0.0 % 
-Number of ParentId in null -> 0 
-Percentage of ParentId in null -> 0.0 % 
-Number of PostTypeId in null -> 0 
-Percentage of PostTypeId in null -> 0.0 % 
-Number of Score in null -> 0 
-Percentage of Score in null -> 0.0 % 
-Number of Tags in null -> 11141945 
-Percentage of Tags in null -> 64.997 % 
-Number of Title in null -> 11141768 
-Percentage of Title in null -> 64.996 % 
-Number of ViewCount in null -> 0 
-Percentage of ViewCount in null -> 0.0 % 
-
-Number of cells in null 83705672
-Percentage of cells in null 24.415134%
+    EDA report for Posts Dataframe
+    Numbers of rows -> 17142169
+    Numbers of columns -> 20
+    Column Report:
+    Number of Id in null -> 0 
+    Percentage of Id in null -> 0.0 % 
+    Number of AcceptedAnswerId in null -> 0 
+    Percentage of AcceptedAnswerId in null -> 0.0 % 
+    Number of AnswerCount in null -> 0 
+    Percentage of AnswerCount in null -> 0.0 % 
+    Number of Body in null -> 6948 
+    Percentage of Body in null -> 0.041 % 
+    Number of ClosedDate in null -> 16872749 
+    Percentage of ClosedDate in null -> 98.428 % 
+    Number of CommentCount in null -> 0 
+    Percentage of CommentCount in null -> 0.0 % 
+    Number of CommunityOwnedDate in null -> 17050460 
+    Percentage of CommunityOwnedDate in null -> 99.465 % 
+    Number of CreationDate in null -> 0 
+    Percentage of CreationDate in null -> 0.0 % 
+    Number of FavoriteCount in null -> 0 
+    Percentage of FavoriteCount in null -> 0.0 % 
+    Number of LastActivityDate in null -> 0 
+    Percentage of LastActivityDate in null -> 0.0 % 
+    Number of LastEditDate in null -> 10542206 
+    Percentage of LastEditDate in null -> 61.499 % 
+    Number of LastEditorDisplayName in null -> 16949596 
+    Percentage of LastEditorDisplayName in null -> 98.877 % 
+    Number of LastEditorUserId in null -> 0 
+    Percentage of LastEditorUserId in null -> 0.0 % 
+    Number of OwnerUserId in null -> 0 
+    Percentage of OwnerUserId in null -> 0.0 % 
+    Number of ParentId in null -> 0 
+    Percentage of ParentId in null -> 0.0 % 
+    Number of PostTypeId in null -> 0 
+    Percentage of PostTypeId in null -> 0.0 % 
+    Number of Score in null -> 0 
+    Percentage of Score in null -> 0.0 % 
+    Number of Tags in null -> 11141945 
+    Percentage of Tags in null -> 64.997 % 
+    Number of Title in null -> 11141768 
+    Percentage of Title in null -> 64.996 % 
+    Number of ViewCount in null -> 0 
+    Percentage of ViewCount in null -> 0.0 % 
+    
+    Number of cells in null 83705672
+    Percentage of cells in null 24.415134%
 ```
 
 ### 1.3 Data Cleansing
@@ -133,53 +133,74 @@ The process of data cleansing was done by:
 The eda report shows the following result after the data cleansing process:
 
 ```
-EDA report for Posts Dataframe
-Numbers of rows -> 17142169
-Numbers of columns -> 20
-Column Report:
-Number of Id in null -> 0 
-Percentage of Id in null -> 0.0 % 
-Number of AcceptedAnswerId in null -> 0 
-Percentage of AcceptedAnswerId in null -> 0.0 % 
-Number of AnswerCount in null -> 0 
-Percentage of AnswerCount in null -> 0.0 % 
-Number of Body in null -> 6948 
-Percentage of Body in null -> 0.041 % 
-Number of ClosedDate in null -> 16872749 
-Percentage of ClosedDate in null -> 98.428 % 
-Number of CommentCount in null -> 0 
-Percentage of CommentCount in null -> 0.0 % 
-Number of CommunityOwnedDate in null -> 17050460 
-Percentage of CommunityOwnedDate in null -> 99.465 % 
-Number of CreationDate in null -> 0 
-Percentage of CreationDate in null -> 0.0 % 
-Number of FavoriteCount in null -> 0 
-Percentage of FavoriteCount in null -> 0.0 % 
-Number of LastActivityDate in null -> 0 
-Percentage of LastActivityDate in null -> 0.0 % 
-Number of LastEditDate in null -> 10542206 
-Percentage of LastEditDate in null -> 61.499 % 
-Number of LastEditorDisplayName in null -> 2 
-Percentage of LastEditorDisplayName in null -> 0.0 % 
-Number of LastEditorUserId in null -> 0 
-Percentage of LastEditorUserId in null -> 0.0 % 
-Number of OwnerUserId in null -> 0 
-Percentage of OwnerUserId in null -> 0.0 % 
-Number of ParentId in null -> 0 
-Percentage of ParentId in null -> 0.0 % 
-Number of PostTypeId in null -> 0 
-Percentage of PostTypeId in null -> 0.0 % 
-Number of Score in null -> 0 
-Percentage of Score in null -> 0.0 % 
-Number of Tags in null -> 0 
-Percentage of Tags in null -> 0.0 % 
-Number of Title in null -> 1 
-Percentage of Title in null -> 0.0 % 
-Number of ViewCount in null -> 0 
-Percentage of ViewCount in null -> 0.0 % 
-
-Number of cells in null 44472366
-Percentage of cells in null 12.971627%
+    EDA report for Posts Dataframe
+    Numbers of rows -> 17142169
+    Numbers of columns -> 20
+    Column Report:
+    Number of Id in null -> 0 
+    Percentage of Id in null -> 0.0 % 
+    Number of AcceptedAnswerId in null -> 0 
+    Percentage of AcceptedAnswerId in null -> 0.0 % 
+    Number of AnswerCount in null -> 0 
+    Percentage of AnswerCount in null -> 0.0 % 
+    Number of Body in null -> 6948 
+    Percentage of Body in null -> 0.041 % 
+    Number of ClosedDate in null -> 16872749 
+    Percentage of ClosedDate in null -> 98.428 % 
+    Number of CommentCount in null -> 0 
+    Percentage of CommentCount in null -> 0.0 % 
+    Number of CommunityOwnedDate in null -> 17050460 
+    Percentage of CommunityOwnedDate in null -> 99.465 % 
+    Number of CreationDate in null -> 0 
+    Percentage of CreationDate in null -> 0.0 % 
+    Number of FavoriteCount in null -> 0 
+    Percentage of FavoriteCount in null -> 0.0 % 
+    Number of LastActivityDate in null -> 0 
+    Percentage of LastActivityDate in null -> 0.0 % 
+    Number of LastEditDate in null -> 10542206 
+    Percentage of LastEditDate in null -> 61.499 % 
+    Number of LastEditorDisplayName in null -> 2 
+    Percentage of LastEditorDisplayName in null -> 0.0 % 
+    Number of LastEditorUserId in null -> 0 
+    Percentage of LastEditorUserId in null -> 0.0 % 
+    Number of OwnerUserId in null -> 0 
+    Percentage of OwnerUserId in null -> 0.0 % 
+    Number of ParentId in null -> 0 
+    Percentage of ParentId in null -> 0.0 % 
+    Number of PostTypeId in null -> 0 
+    Percentage of PostTypeId in null -> 0.0 % 
+    Number of Score in null -> 0 
+    Percentage of Score in null -> 0.0 % 
+    Number of Tags in null -> 0 
+    Percentage of Tags in null -> 0.0 % 
+    Number of Title in null -> 1 
+    Percentage of Title in null -> 0.0 % 
+    Number of ViewCount in null -> 0 
+    Percentage of ViewCount in null -> 0.0 % 
+    
+    Number of cells in null 44472366
+    Percentage of cells in null 12.971627%
+```
+### 1.4 Outliers
+Outliers find in the PostDataframe will be filtered by Inter quartiles method, it will only applied to Integer Type columns.
+Using the method:
+```Scala
+def getOutliers(dfPosts: DataFrame, spark: SparkSession)
+```
+It returns a Dataframe that all Id's that pass the range of "Lower Boundary" and "Upper Boundary", after return the Dataframe it will be filtered with a "left_anti" join condition.
+This will keep only the records of the main Dataframe that didn't make match with the filtered outliers Id's.
+```Scala
+    val idOutliers = LoaderHelper.getOutliers(dfPostsClean, spark)
+    val postsWithoutOutliers = dfPostsClean.as("dfPosts")
+      .join(idOutliers.as("dfOutliers"), col("dfPosts.Id") === col("dfOutliers.Id"), "left-anti")
+```
+Exaple of execution:
+```Scala
+    Outliers for column -> Score
+    Lower Boundary: -4.5
+    Upper Boundary: 7.5
+    Inter quartile: 3.0
+    Quantity of outliers values for Score column -> : 1469682
 ```
 
 ## 2. How to execute the solution
@@ -567,9 +588,24 @@ It has been date format to "yyyy-MM" to have only the year and the month and gro
 ## 4.- Project Structure
 The solution is composed by three objects that one extends the App in order to execute the process.
 
-- PostLoadClass: In this object the SparkSession is used and perform all the operations to generate the insights.
+- Main.scala: In this object the SparkSession is created and is passed to all methods created to generate insights and outliers.
+- AppInfo.scala: This object has the definition to create logs in a personalized Level "APP_INFO"
+  ```Scala
+    class AppInfo extends Level(Level.FATAL.toInt, "APP_INFO", 0)
+
+    object AppInfo {
+      final val APP_INFO = new AppInfo()
+    }
+    ```
+  - Usage:
+  ```Scala
+    BasicConfigurator.configure();
+    val log = LogManager.getRootLogger
+    log.setLevel(AppInfo.APP_INFO)
+    log.log(AppInfo.APP_INFO, "Posts Schema:\n") 
+  ```
   
-  - LoaderHelper: This object has helper methods:
+- LoaderHelper.scala: This object has helper methods:
 
     - ``` def readTable (spark: SparkSession, tableName:String)``` it receives the SparkSession object and the table name to be read, it makes the connection to the SQL Server database and returns the table pass in a DataFrame object.
 
@@ -640,6 +676,38 @@ The solution is composed by three objects that one extends the App in order to e
        postsVotesDf.write.parquet("src/main/resources/Votes.parquet")
        postsVoteTypesDf.write.parquet("src/main/resources/VoteTypes.parquet")
   }
+```
+- ```def getOutliers(dfPosts: DataFrame, spark: SparkSession)``` it receives the main dataframe Posts and the SparkSession Object, it finds the outliers values with the interquartile method and store the ids in a Dataframe. It iterates all integer type columns dynamically.
+
+```Scala
+    def getOutliers(dfPosts: DataFrame, spark: SparkSession): DataFrame = {
+        val schema = StructType(Seq(
+          StructField("Id", IntegerType, nullable = false)
+        ))
+        var dfId: DataFrame = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], schema)
+        dfPosts.columns.foreach { columnName =>
+          if ((columnName == "Score" || columnName == "ViewCount" || columnName == "CommentCount") && dfPosts.schema(columnName).dataType.typeName == "integer") {
+            val strBuilder = new mutable.StringBuilder(s"\nOutliers for column -> $columnName\n")
+    
+            val Array(q1, q3) = dfPosts.stat.approxQuantile(columnName,
+              Array(0.25, 0.75), 0.0)
+            val iqr = q3 - q1
+            val upBoundary = q3 + 1.5 * iqr
+            val lowBoundary = q1 - 1.5 * iqr
+    
+            strBuilder.append(s"Lower Boundary: $lowBoundary\n")
+            strBuilder.append(s"Upper Boundary: $upBoundary\n")
+            strBuilder.append(s"Inter quartile: $iqr\n")
+    
+            val outliers = dfPosts.filter(col(columnName) < lowBoundary || col(columnName) > upBoundary).select("Id")
+    
+            strBuilder.append(s"Quantity of outliers values for $columnName column -> : ${outliers.count()}\n")
+            dfId = dfId.union(outliers)
+            log.log(AppInfo.APP_INFO,strBuilder)
+          }
+        }
+        dfId.distinct()
+      }
 ```
 
 - HelperSchema.scala: This object has schema StructureTypes defined for every table.

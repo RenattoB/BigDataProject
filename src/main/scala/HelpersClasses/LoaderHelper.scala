@@ -1,18 +1,24 @@
 package HelpersClasses
 
-import org.apache.commons.math3.util.Precision.round
-import org.apache.spark.sql.{Column, DataFrame, SparkSession}
-import org.apache.spark.sql.functions.{col, length, lit}
+import org.apache.commons.math3.util.Precision
+import org.apache.log4j.{BasicConfigurator, Level, LogManager}
+import org.apache.spark.sql.{Column, DataFrame, Row, SparkSession}
+import org.apache.spark.sql.functions.{asc, avg, col, count, countDistinct, date_format, desc, expr, hour, lit, round, sum}
+import org.apache.spark.sql.types.{IntegerType, StructField, StructType}
 
 import scala.collection.mutable
 import scala.reflect.runtime.{universe => runTimeUniverse}
 
 object LoaderHelper {
+  BasicConfigurator.configure();
+  val log = LogManager.getRootLogger
+  log.setLevel(AppInfo.APP_INFO)
+
   def colMatcher(optionalCols: Set[String],
                  mainDFCols: Set[String]): List[Column] = {
     mainDFCols.toList.map {
       case x if optionalCols.contains(x) => col(x)
-      case x                             => lit(null).as(x)
+      case x => lit(null).as(x)
     }
   }
 
@@ -28,7 +34,7 @@ object LoaderHelper {
 
   }
 
-  def readTable(spark: SparkSession, tableName:String): DataFrame = {
+  def readTable(spark: SparkSession, tableName: String): DataFrame = {
     spark.read
       .format("jdbc")
       .options(Map(
@@ -48,10 +54,10 @@ object LoaderHelper {
     val columnNumber = columnNames.length
     returnString.append(s"Numbers of rows -> $dfPostsTotal\n")
     returnString.append(s"Numbers of columns -> $columnNumber\n")
-    var numberOfCellsInNull : Long = 0
+    var numberOfCellsInNull: Long = 0
     returnString.append("Column Report:\n")
-    columnNames.foreach {columnName =>
-      var columnNull : Long = 0
+    columnNames.foreach { columnName =>
+      var columnNull: Long = 0
       if (dfPosts.schema(columnName).dataType.typeName == "timestamp") {
         columnNull = dfPosts.filter(dfPosts(columnName).isNull || dfPosts(columnName) === "").count()
       } else {
@@ -59,7 +65,7 @@ object LoaderHelper {
       }
       numberOfCellsInNull += columnNull
       returnString.append(s"Number of $columnName in null -> $columnNull \n")
-      returnString.append(s"Percentage of $columnName in null -> ${round(columnNull * 100 / dfPostsTotal.toFloat,3)} % \n")
+      returnString.append(s"Percentage of $columnName in null -> ${Precision.round(columnNull * 100 / dfPostsTotal.toFloat, 3)} % \n")
     }
     returnString.append(s"\nNumber of cells in null $numberOfCellsInNull")
     returnString.append(s"\nPercentage of cells in null ${numberOfCellsInNull * 100 / (columnNumber * dfPostsTotal).toFloat}%\n")
@@ -87,4 +93,154 @@ object LoaderHelper {
     postsVotesDf.write.parquet("src/main/resources/Votes.parquet")
     postsVoteTypesDf.write.parquet("src/main/resources/VoteTypes.parquet")
   }
+
+  def generateInsights(dfPosts: DataFrame, postsDfClean: DataFrame, spark: SparkSession): Unit = {
+
+    val usersDf = spark.read.parquet("src/main/resources/users.parquet")
+    //val postsDf = spark.read.parquet("/opt/spark-data/posts.parquet")
+    //val usersDf = spark.read.parquet("/opt/spark-data/users.parquet")
+
+    //INSIGHTS
+    val postsJoinUsers = postsDfClean.col("OwnerUserId") === usersDf.col("Id")
+    //1.- Top 50 users with the highest average answer score excluding community wiki / closed posts
+    val postsAndUsers = postsDfClean.join(usersDf, postsJoinUsers, "inner")
+    postsAndUsers
+      .filter("PostTypeId = 2 and CommunityOwnedDate is null and ClosedDate is null")
+      .groupBy(usersDf.col("Id"), usersDf.col("DisplayName"))
+      .agg(
+        countDistinct(dfPosts.col("Id")).as("Answers"),
+        round(avg(col("Score")), 3).as("Average Answer Score")
+      )
+      .where("Answers > 20")
+      .orderBy(desc("Average Answer Score"))
+      .select(
+        col("Id").as("User Id"),
+        col("DisplayName").as("Username"),
+        col("Answers"),
+        col("Average Answer Score")
+      )
+      .limit(20)
+      .show(20)
+
+    //2.- Users with highest accept rate of their answers
+    val postsParentDf = spark.read.parquet("src/main/resources/posts.parquet")
+    //val postsParentDf = spark.read.parquet("/opt/spark-data/posts.parquet")
+    val postsUsersJoinCondition = col("Posts.OwnerUserId") === col("Users.Id")
+    val acceptanceDf = postsDfClean.as("Posts")
+      .join(usersDf.as("Users"), postsUsersJoinCondition, "inner")
+      .join(postsParentDf.as("PostParent"), col("PostParent.Id") === col("Posts.ParentId"), "inner")
+      .filter("(PostParent.OwnerUserId != Users.Id or PostParent.OwnerUserId is null)")
+      .withColumn("AcceptedAnswerFlag", expr("case when PostParent.AcceptedAnswerId = Posts.Id then 1 else 0 end"))
+
+    acceptanceDf
+      .groupBy("Users.Id", "Users.DisplayName")
+      .agg(
+        count("Users.Id").as("Number of Answers"),
+        sum("AcceptedAnswerFlag").as("Number Accepted"),
+        round(sum("AcceptedAnswerFlag") * 100 / count("Posts.Id"), 3).as("Accepted Percent")
+      )
+      .orderBy(desc("Accepted Percent"), desc("Number of Answers"))
+      .filter(col("Number of Answers") > 10)
+      .limit(50)
+      .show()
+
+    //3.- Top Users by Number of Bounties Won
+    val votesDf = spark.read.parquet("src/main/resources/Votes.parquet")
+    //val votesDf = spark.read.parquet("/opt/spark-data/Votes.parquet")
+    val votesPostsJoinCondition = col("Votes.PostId") === col("Posts.Id")
+    val votesUsersPostsJoinDf = votesDf.as("Votes")
+      .join(postsDfClean.as("Posts"), votesPostsJoinCondition, "inner")
+      .join(usersDf.as("Users"), postsUsersJoinCondition, "inner")
+
+    votesUsersPostsJoinDf
+      .filter("Votes.VoteTypeId = 9")
+      .groupBy("Posts.OwnerUserId", "Users.DisplayName")
+      .agg(
+        count("Votes.Id").as("Bounties Won")
+      )
+      .withColumnRenamed("DisplayName", "Username")
+      .withColumnRenamed("OwnerUserId", "User Id")
+      .orderBy(desc("Bounties Won"))
+      .limit(10)
+      .show(10)
+
+    //4.-  Most Upvoted Answers of All Time
+    val votesPostsJoinDf = votesDf.as("Votes")
+      .join(postsDfClean.as("Posts"), votesPostsJoinCondition, "inner")
+
+    votesPostsJoinDf
+      .filter("Posts.PostTypeId = 2 and Votes.VoteTypeId = 2")
+      .groupBy("Votes.PostId", "Posts.Body")
+      .agg(
+        count("Votes.PostId").as("Vote Count")
+      )
+      .withColumnRenamed("Body", "Question")
+      .withColumnRenamed("PostId", "Post Id")
+      .orderBy(desc("Vote Count"))
+      .limit(20)
+      .show()
+
+    //5.- Distribution of User Activity Per Hour
+    val commentsDf = spark.read.parquet("src/main/resources/comments.parquet")
+    //val commentsDf = spark.read.parquet("/opt/spark-data/comments.parquet")
+    val hoursFromPostsDf = postsDfClean.select(hour(col("CreationDate")).as("Hour"), lit(1).as("Counter"))
+    val hoursFromCommentsDf = commentsDf.select(hour(col("CreationDate")).as("Hour"), lit(1).as("Counter"))
+    val distinctHoursFromPostDf = postsDfClean.select(hour(col("CreationDate")).as("Hour")).dropDuplicates()
+    hoursFromPostsDf.union(hoursFromCommentsDf).as("HoursUnion")
+      .join(distinctHoursFromPostDf.as("DistinctHours"), col("HoursUnion.Hour") === col("DistinctHours.Hour"), "right")
+      .groupBy("DistinctHours.Hour")
+      .agg(
+        count("HoursUnion.Counter").as("Activity Traffic")
+      )
+      .orderBy(asc("DistinctHours.Hour"))
+      .show(24)
+
+    //6.- Questions Count by Month
+    val postsLinksDf = spark.read.parquet("src/main/resources/postLinks.parquet")
+    //val postsLinksDf = spark.read.parquet("/opt/spark-data/postLinks.parquet")
+    postsDfClean.as("Posts")
+      .join(postsLinksDf.as("PostsLinks"), col("Posts.Id") === col("PostsLinks.PostId"), "left")
+      .join(postsParentDf.as("PostParent"), col("PostParent.Id") === col("PostsLinks.RelatedPostId"), "left")
+      .where("Posts.PostTypeId = 1")
+      .select(
+        date_format(col("Posts.CreationDate"), "yyyy-MM").as("Date"),
+        col("Posts.Id")
+      )
+      .groupBy("Date")
+      .agg(
+        count("Posts.Id").as("Quantity")
+      )
+      .orderBy(desc("Date"))
+      .show()
+  }
+
+  def getOutliers(dfPosts: DataFrame, spark: SparkSession): DataFrame = {
+    val schema = StructType(Seq(
+      StructField("Id", IntegerType, nullable = false)
+    ))
+    var dfId: DataFrame = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], schema)
+    dfPosts.columns.foreach { columnName =>
+      if ((columnName == "Score" || columnName == "ViewCount" || columnName == "CommentCount") && dfPosts.schema(columnName).dataType.typeName == "integer") {
+        val strBuilder = new mutable.StringBuilder(s"\nOutliers for column -> $columnName\n")
+
+        val Array(q1, q3) = dfPosts.stat.approxQuantile(columnName,
+          Array(0.25, 0.75), 0.0)
+        val iqr = q3 - q1
+        val upBoundary = q3 + 1.5 * iqr
+        val lowBoundary = q1 - 1.5 * iqr
+
+        strBuilder.append(s"Lower Boundary: $lowBoundary\n")
+        strBuilder.append(s"Upper Boundary: $upBoundary\n")
+        strBuilder.append(s"Inter quartile: $iqr\n")
+
+        val outliers = dfPosts.filter(col(columnName) < lowBoundary || col(columnName) > upBoundary).select("Id")
+
+        strBuilder.append(s"Quantity of outliers values for $columnName column -> : ${outliers.count()}\n")
+        dfId = dfId.union(outliers)
+        log.log(AppInfo.APP_INFO,strBuilder)
+      }
+    }
+    dfId.distinct()
+  }
+
 }
