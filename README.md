@@ -711,3 +711,15 @@ The solution is composed by three objects that one extends the App in order to e
 ```
 
 - HelperSchema.scala: This object has schema StructureTypes defined for every table.
+
+# 5. Future improvements and features
+
+## 5.1. Features
+
+- Arguments pass through command line to modify Dataset path files to read.
+- New informative insights.
+
+## 5.2. Improvements
+
+- Log properties better configuration.
+- External configuration file to read sensitive parameters (username, password, database connection, etc)
