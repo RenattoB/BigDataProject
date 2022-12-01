@@ -1,7 +1,7 @@
 package HelpersClasses
 
 import org.apache.commons.math3.util.Precision
-import org.apache.log4j.{BasicConfigurator, Level, LogManager}
+import org.apache.log4j.{BasicConfigurator, Level, LogManager, Logger}
 import org.apache.spark.sql.{Column, DataFrame, Row, SparkSession}
 import org.apache.spark.sql.functions.{asc, avg, col, count, countDistinct, date_format, desc, expr, hour, lit, round, sum}
 import org.apache.spark.sql.types.{IntegerType, StructField, StructType}
@@ -11,7 +11,8 @@ import scala.reflect.runtime.{universe => runTimeUniverse}
 
 object LoaderHelper {
   BasicConfigurator.configure();
-  val log = LogManager.getRootLogger
+  val log: Logger = LogManager.getRootLogger
+  val googleStorageOutput = "gs://dataflow-bckt/output/"
   log.setLevel(AppInfo.APP_INFO)
 
   def colMatcher(optionalCols: Set[String],
@@ -104,7 +105,7 @@ object LoaderHelper {
     val postsJoinUsers = postsDfClean.col("OwnerUserId") === usersDf.col("Id")
     //1.- Top 50 users with the highest average answer score excluding community wiki / closed posts
     val postsAndUsers = postsDfClean.join(usersDf, postsJoinUsers, "inner")
-    postsAndUsers
+    val firstInsight = postsAndUsers
       .filter("PostTypeId = 2 and CommunityOwnedDate is null and ClosedDate is null")
       .groupBy(usersDf.col("Id"), usersDf.col("DisplayName"))
       .agg(
@@ -120,7 +121,10 @@ object LoaderHelper {
         col("Average Answer Score")
       )
       .limit(20)
-      .show(20)
+    firstInsight.show()
+    log.log(AppInfo.APP_INFO, "First insight start write\n")
+    firstInsight.write.option("header","true").csv(googleStorageOutput + "firstInsight/")
+    log.log(AppInfo.APP_INFO, "First insight finish write\n")
 
     //2.- Users with highest accept rate of their answers
     val postsParentDf = spark.read.parquet("src/main/resources/posts.parquet")
@@ -132,7 +136,7 @@ object LoaderHelper {
       .filter("(PostParent.OwnerUserId != Users.Id or PostParent.OwnerUserId is null)")
       .withColumn("AcceptedAnswerFlag", expr("case when PostParent.AcceptedAnswerId = Posts.Id then 1 else 0 end"))
 
-    acceptanceDf
+    val secondInsight = acceptanceDf
       .groupBy("Users.Id", "Users.DisplayName")
       .agg(
         count("Users.Id").as("Number of Answers"),
@@ -142,7 +146,10 @@ object LoaderHelper {
       .orderBy(desc("Accepted Percent"), desc("Number of Answers"))
       .filter(col("Number of Answers") > 10)
       .limit(50)
-      .show()
+    secondInsight.show()
+    log.log(AppInfo.APP_INFO, "Second insight start write\n")
+    secondInsight.write.option("header","true").csv(googleStorageOutput + "secondInsight/")
+    log.log(AppInfo.APP_INFO, "Second insight finish write\n")
 
     //3.- Top Users by Number of Bounties Won
     val votesDf = spark.read.parquet("src/main/resources/Votes.parquet")
@@ -152,7 +159,7 @@ object LoaderHelper {
       .join(postsDfClean.as("Posts"), votesPostsJoinCondition, "inner")
       .join(usersDf.as("Users"), postsUsersJoinCondition, "inner")
 
-    votesUsersPostsJoinDf
+    val thirdInsight = votesUsersPostsJoinDf
       .filter("Votes.VoteTypeId = 9")
       .groupBy("Posts.OwnerUserId", "Users.DisplayName")
       .agg(
@@ -162,23 +169,29 @@ object LoaderHelper {
       .withColumnRenamed("OwnerUserId", "User Id")
       .orderBy(desc("Bounties Won"))
       .limit(10)
-      .show(10)
+    thirdInsight.show(10)
+    log.log(AppInfo.APP_INFO, "Third insight start write\n")
+    thirdInsight.write.option("header","true").csv(googleStorageOutput + "thirdInsight/")
+    log.log(AppInfo.APP_INFO, "Third insight finish write\n")
 
     //4.-  Most Upvoted Answers of All Time
     val votesPostsJoinDf = votesDf.as("Votes")
       .join(postsDfClean.as("Posts"), votesPostsJoinCondition, "inner")
 
-    votesPostsJoinDf
+    val fourthInsight = votesPostsJoinDf
       .filter("Posts.PostTypeId = 2 and Votes.VoteTypeId = 2")
-      .groupBy("Votes.PostId", "Posts.Body")
+      .groupBy("Votes.PostId")
       .agg(
         count("Votes.PostId").as("Vote Count")
       )
-      .withColumnRenamed("Body", "Question")
       .withColumnRenamed("PostId", "Post Id")
       .orderBy(desc("Vote Count"))
       .limit(20)
-      .show()
+
+    fourthInsight.show()
+    log.log(AppInfo.APP_INFO, "Fourth insight start write\n")
+    fourthInsight.write.option("header","true").csv(googleStorageOutput + "fourthInsight/")
+    log.log(AppInfo.APP_INFO, "Fourth insight finish write\n")
 
     //5.- Distribution of User Activity Per Hour
     val commentsDf = spark.read.parquet("src/main/resources/comments.parquet")
@@ -186,19 +199,24 @@ object LoaderHelper {
     val hoursFromPostsDf = postsDfClean.select(hour(col("CreationDate")).as("Hour"), lit(1).as("Counter"))
     val hoursFromCommentsDf = commentsDf.select(hour(col("CreationDate")).as("Hour"), lit(1).as("Counter"))
     val distinctHoursFromPostDf = postsDfClean.select(hour(col("CreationDate")).as("Hour")).dropDuplicates()
-    hoursFromPostsDf.union(hoursFromCommentsDf).as("HoursUnion")
+    val fifthInsight = hoursFromPostsDf.union(hoursFromCommentsDf).as("HoursUnion")
       .join(distinctHoursFromPostDf.as("DistinctHours"), col("HoursUnion.Hour") === col("DistinctHours.Hour"), "right")
       .groupBy("DistinctHours.Hour")
       .agg(
         count("HoursUnion.Counter").as("Activity Traffic")
       )
       .orderBy(asc("DistinctHours.Hour"))
-      .show(24)
+      .limit(24)
+
+    fifthInsight.show()
+    log.log(AppInfo.APP_INFO, "Fifth insight start write\n")
+    fifthInsight.write.option("header","true").csv(googleStorageOutput + "fifthInsight/")
+    log.log(AppInfo.APP_INFO, "Fifth insight finish write\n")
 
     //6.- Questions Count by Month
     val postsLinksDf = spark.read.parquet("src/main/resources/postLinks.parquet")
     //val postsLinksDf = spark.read.parquet("/opt/spark-data/postLinks.parquet")
-    postsDfClean.as("Posts")
+    val sixthInsight = postsDfClean.as("Posts")
       .join(postsLinksDf.as("PostsLinks"), col("Posts.Id") === col("PostsLinks.PostId"), "left")
       .join(postsParentDf.as("PostParent"), col("PostParent.Id") === col("PostsLinks.RelatedPostId"), "left")
       .where("Posts.PostTypeId = 1")
@@ -211,7 +229,13 @@ object LoaderHelper {
         count("Posts.Id").as("Quantity")
       )
       .orderBy(desc("Date"))
-      .show()
+
+    sixthInsight.show()
+    log.log(AppInfo.APP_INFO, "Sixth insight start write\n")
+    sixthInsight.repartition(1).write.option("header","true").csv(googleStorageOutput + "sixthInsight/")
+    log.log(AppInfo.APP_INFO, "Fifth insight finish write\n")
+
+
   }
 
   def getOutliers(dfPosts: DataFrame, spark: SparkSession): DataFrame = {
