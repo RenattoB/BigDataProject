@@ -585,7 +585,7 @@ It has been date format to "yyyy-MM" to have only the year and the month and gro
         .show()
 ```
 
-## 4.- Project Structure
+## 4. Project Structure
 The solution is composed by three objects that one extends the App in order to execute the process.
 
 - Main.scala: In this object the SparkSession is created and is passed to all methods created to generate insights and outliers.
@@ -723,3 +723,200 @@ The solution is composed by three objects that one extends the App in order to e
 
 - Log properties better configuration.
 - External configuration file to read sensitive parameters (username, password, database connection, etc)
+
+# 6. Google Cloud Platform
+
+## 6.1. Transfer process
+
+### 6.1.1. Cloud preparation
+To manage the results of the insights in the Google Cloud Platform, it must be loaded in Google Storage, for this case, the program will store the results in a CSV format in a Google Bucket.
+To have this process done we must generate a new role with owner permissions in the project we're working on.
+<br>
+Example:
+<br>
+
+![Alt text](src/main/resources/Images/role_detail.jpg "User Role Created")
+
+After the creation of the user, we must add a new key to authenticate the application, we can create a new key by:
+- Click on Keys tab
+- Click on Add new key
+- Select the option that fits better (The project uses a JSON format)
+- Download the key and paste it inside the project
+
+![Alt text](src/main/resources/Images/key_creation.jpg "Key Created")
+<br><br>
+![Alt text](src/main/resources/Images/key_in_project.jpg "Key in project")
+
+Create the bucket to store the data of the insights
+
+![Alt text](src/main/resources/Images/data_flow_bucket.jpg "Bucket creation")
+
+### 6.1.2. Project preparation
+To support the google cloud platform integration the project should have the next dependencies in the sbt file
+
+```sbt
+  ThisBuild / libraryDependencies += "com.google.cloud.bigdataoss" % "gcs-connector" % "hadoop3-2.0.0"
+```
+
+Save the insights in the google cloud bucket created.
+
+First insight example:
+
+```Scala
+    val googleStorageOutput = "gs://dataflow-bckt/output/"
+    
+    log.log(AppInfo.APP_INFO, "First insight start write\n")
+    firstInsight.write.option("header","true").csv(googleStorageOutput + "firstInsight/")
+    log.log(AppInfo.APP_INFO, "First insight finish write\n")
+```
+
+Verify the if the insight is saved
+
+![Alt text](src/main/resources/Images/first_insight.jpg "First Insight Saved")
+
+Repeat the process for all the insights generated
+
+![Alt text](src/main/resources/Images/all_insights.jpg "First Insight Saved")
+
+## 6.2. Dataflow process
+
+To transfer all the data uploaded in the bucket storage to big query we should define a pipeline, for this case we'll define a python program to make this process.
+
+### 6.2.1 Python program
+We need to copy the key also in the python project:
+
+![Alt text](src/main/resources/Images/python_key.jpg "First Insight Saved")
+
+We're going to use the next libraries:
+```Python
+    from __future__ import absolute_import
+    import argparse
+    import logging
+    import re
+    import apache_beam as beam
+    from apache_beam.options.pipeline_options import PipelineOptions
+    import os
+```
+
+Define the credentials path with the insights schemas and folders:
+```python
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '/home/rbaca/bigDataProject/key_dataflow.json'
+    
+    knownLocations = ['firstInsight', 'secondInsight', 'thirdInsight', 'fourthInsight', 'fifthInsight', 'sixthInsight']
+    knownColumns = [('user_Id', 'username', 'answers', 'average_answer_score'), 
+                    ('id', 'displayName', 'numberAnswers', 'numberAccepted', 'acceptedPercent'),
+                    ('userId', 'username', 'bountiesWon'),
+                    ('postId', 'voteCount'),
+                    ('hour', 'activityTraffic'),
+                    ('date', 'quantity')]
+    knownSchemas = ['user_Id:STRING,username:STRING,answers:INTEGER,average_answer_score:FLOAT',
+                    'id:STRING,displayName:STRING,numberAnswers:INTEGER,numberAccepted:INTEGER,acceptedPercent:FLOAT',
+                    'userId:STRING,username:STRING,bountiesWon:INTEGER',
+                    'postId:STRING,voteCount:INTEGER',
+                    'hour:INTEGER,activityTraffic:STRING',
+                    'date:STRING,quantity:STRING']
+    
+    bucketDirectory = 'gs://dataflow-bckt/output/'
+    dataset = 'BigDataProject.'
+
+```
+
+We have the next functions:
+```python
+    def runPipeLine(pipelineArgs, i):
+```
+This function will take the pipeline args as an argument also with the number of the insight it will iterate and retrieve output information. It'll create an apache pipeline and execute it. The order is:
+- Read the specified file
+- Transform it into a row
+- Write the row in Big query (This will also create the table)
+
+```python
+    def runPipeLine(pipelineArgs, i):
+    data_ingestion = ParserClass()
+    p = beam.Pipeline(options=PipelineOptions(pipelineArgs))    
+    (
+            p | f'Read CSV for {knownLocations[i]}' >> beam.io.ReadFromText(bucketDirectory + knownLocations[i] + '/*.csv',
+                                                        skip_header_lines=1)
+            | f'String To BigQuery Row for {knownLocations[i]}' >> beam.Map(lambda s: data_ingestion.parseRow(s, knownColumns[i]))
+            | f'Write to BigQuery for {knownLocations[i]}' >> beam.io.Write(
+                beam.io.BigQuerySink(
+                    dataset + knownLocations[i],
+                    schema= knownSchemas[i],
+                    create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED,
+                    write_disposition=beam.io.BigQueryDisposition.WRITE_TRUNCATE))
+    )
+    p.run().wait_until_finish()
+```
+
+This class will contain help methods to parse the row with the specified column format.
+```python
+    class ParserClass:
+        def parseRow(self, string_input, columnsName):
+            values = re.split(",",
+                              re.sub('\r\n', '', re.sub(u'"', '', string_input)))
+            row = dict(
+                zip(columnsName,
+                    values))
+            return row
+```
+
+
+This is the principle method that will call the pipeline method with the insights that it has, this will dynamically generate the pipelines.
+```python
+    def run(argv=None):
+    
+        parser = argparse.ArgumentParser()
+    
+        parser.add_argument(
+            '--input',
+            dest='input',
+            required=False,
+            help='BigDataPorject pipeline to import csv from Google Storage to Big Query',
+            default='gs://dataflow-bckt/output/firstInsight/part-00000-5b9f8a56-6103-47c1-bd10-aa768c6f4d0d-c000.csv')
+    
+        parser.add_argument('--output',
+                            dest='output',
+                            required=False,
+                            help='Output to BQ table',
+                            default='BigDataProject.firstInsight')
+    
+        known_args, pipeline_args = parser.parse_known_args(argv)   
+    
+        for i in range(len(knownLocations)):
+            runPipeLine(pipeline_args, i)
+```
+
+Execute the python script with the following command:
+```
+    export PROJECT=united-reason-369622
+    echo $PROJECT
+    export tmpBucket=process_bucket
+    echo $tmpBucket
+    cd bigDataProject
+    python InsightPipeLine.py \--project=$PROJECT \--runner=DataflowRunner \--staging_location=gs://$tmpBucket/staging_folder \--temp_location gs://$tmpBucket/tmp_folder \--save_main_session --region us-east1
+```
+
+After running the python script, in the Dataflow - Jobs service we can see that the 6 jobs were created and executed it successfully.
+
+![Alt text](src/main/resources/Images/dataflow_details.jpg "Dataflow jobs")
+
+If we enter to one of the jobs we can see that all the steps were execute it correctly.
+
+![Alt text](src/main/resources/Images/job_first_insight.png "Dataflow steps")
+
+In the Big Query service we'll see that the tables were created correctly. Also we can query the results
+
+![Alt text](src/main/resources/Images/tables.jpg "Big Query Tables")
+<br>
+<br>
+![Alt text](src/main/resources/Images/select_big_query.jpg "Big Query First")
+<br>
+<br>
+![Alt text](src/main/resources/Images/select_fourth.jpg "Big Query Fourth")
+
+
+
+
+
+
+
